@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+
+    <declare-styleable name="CustomFontTextView">
+        <attr name="font_name">
+            <enum name="normal" value="0"/>
+            <enum name="bold" value="1"/>
+            <enum name="future" value="2"/>
+            <enum name="lobster" value="3"/>
+        </attr>
+    </declare-styleable>
+
+
+    <declare-styleable name="MultipleStateView">
+        <attr name="empty_view" format="reference"/>
+        <attr name="error_view" format="reference"/>
+        <attr name="content_view" format="reference"/>
+        <attr name="net_error_view" format="reference"/>
+        <attr name="loading_view" format="reference"/>
+    </declare-styleable>
+
+    <declare-styleable name="PullToZoomBase">
+        <attr name="zoomView" format="reference"/>
+        <attr name="headView" format="reference"/>
+        <attr name="isHeaderParallax" format="boolean"/>
+    </declare-styleable>
+
+</resources>
