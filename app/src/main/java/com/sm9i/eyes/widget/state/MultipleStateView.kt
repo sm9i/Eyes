@@ -17,8 +17,6 @@ import com.sm9i.eyes.R
  * 加载、网络异常、内容、空
  */
 class MultipleStateView : RelativeLayout {
-
-
     private var mEmptyView: View? = null
     private var mNetErrorView: View? = null
     private var mLoadingView: View? = null
