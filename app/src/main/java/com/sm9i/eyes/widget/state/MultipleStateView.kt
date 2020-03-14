@@ -1,7 +1,6 @@
 package com.sm9i.eyes.widget.state
 
 import android.content.Context
-import android.graphics.Color
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -10,6 +9,7 @@ import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
 import com.sm9i.eyes.R
+import com.sm9i.eyes.widget.NetLoadingView
 
 
 /**
@@ -145,7 +145,14 @@ class MultipleStateView : RelativeLayout {
      * 设置加载view
      */
     private fun setLoadView(onClickListener: OnClickListener) {
-
+        if (mLoadingView == null) {
+            mLoadingView = NetLoadingView(context)
+            mLoadingView?.tag = State.LOADING
+            mLoadingView?.setOnClickListener(onClickListener)
+            addStateView(mLoadingView)
+        } else {
+            mLoadingView?.visibility = View.VISIBLE
+        }
 
     }
 
@@ -153,7 +160,19 @@ class MultipleStateView : RelativeLayout {
      * 设置网络异常view
      */
     private fun setNetErrorView(onClickListener: OnClickListener) {
-
+        if (mNetErrorView == null) {
+            mNetErrorView =
+                LayoutInflater.from(context).inflate(R.layout.layout_loading_message, null)
+            mNetErrorView?.tag = State.NET_ERROR
+            val imageView = mNetErrorView?.findViewById<ImageView>(R.id.iv_image)
+            val errorText = mNetErrorView?.findViewById<TextView>(R.id.tv_message_info)
+            imageView?.setImageResource(R.drawable.ic_eye_black_error)
+            errorText?.setText(R.string.net_error_message)
+            mNetErrorView?.setOnClickListener(onClickListener)
+            addStateView(mNetErrorView)
+        } else {
+            mNetErrorView?.visibility = View.VISIBLE
+        }
     }
 
     /**
