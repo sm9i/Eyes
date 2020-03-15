@@ -23,8 +23,6 @@ open class BasePresenter<V> : LifecycleObserver {
     fun attachView(view: V, lifecycleOwner: LifecycleOwner) {
         this.mView = view
         this.mScopeProvider = AndroidLifecycleScopeProvider.from(lifecycleOwner)
-
     }
-
 
 }
