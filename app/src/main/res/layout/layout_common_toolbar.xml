@@ -14,7 +14,7 @@
         android:src="@drawable/ic_action_back_black"
         android:layout_alignParentLeft="true" />
 
-    <com.sm9i.eyes.widget.font.CustomFontView
+    <com.sm9i.eyes.widget.font.CustomFontTextView
         android:id="@+id/tv_title"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"

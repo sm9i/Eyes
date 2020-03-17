@@ -7,7 +7,7 @@ import android.widget.TextView
 /**
  * 自定义字体
  */
-open class CustomFontView : TextView {
+open class CustomFontTextView : TextView {
 
     constructor(context: Context?) : this(context, null)
     constructor(context: Context?, attrs: AttributeSet?) : this(context, attrs, 0)

@@ -9,7 +9,7 @@ import androidx.annotation.StringRes
 import com.sm9i.eyes.R
 import com.sm9i.eyes.manager.ActivityManager
 import com.sm9i.eyes.utils.showKeyBoard
-import com.sm9i.eyes.widget.font.CustomFontView
+import com.sm9i.eyes.widget.font.CustomFontTextView
 import com.sm9i.eyes.widget.font.FontType
 import com.sm9i.eyes.widget.state.MultipleStateView
 import me.yokeyword.fragmentation.SupportActivity
@@ -110,7 +110,7 @@ abstract class BaseAppCompatActivity : SupportActivity() {
             showKeyBoard(false)
             finish()
         }
-        val tvTitle = toolbar.findViewById<CustomFontView>(R.id.tv_title)
+        val tvTitle = toolbar.findViewById<CustomFontTextView>(R.id.tv_title)
         tvTitle.setFontType(fontType)
         tvTitle.text = title
     }
@@ -129,7 +129,7 @@ abstract class BaseAppCompatActivity : SupportActivity() {
             showKeyBoard(false)
             finish()
         }
-        val tvTitle = toolbar.findViewById<CustomFontView>(R.id.tv_title)
+        val tvTitle = toolbar.findViewById<CustomFontTextView>(R.id.tv_title)
         tvTitle.setFontType(fontType)
         tvTitle.setText(id!!)
     }

@@ -15,7 +15,7 @@
         android:layout_marginTop="200dp"
         android:background="@drawable/ic_eye_black_error" />
 
-    <com.sm9i.eyes.widget.font.CustomFontView
+    <com.sm9i.eyes.widget.font.CustomFontTextView
         android:id="@+id/tv_message_info"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
