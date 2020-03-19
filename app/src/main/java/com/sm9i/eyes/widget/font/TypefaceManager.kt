@@ -21,7 +21,7 @@ object TypefaceManager {
     /**
      * 设置text 字体，如果参数中有字体，就设置
      */
-    fun setTextTypeFace(context: Context, attributes: AttributeSet, textView: TextView) {
+    fun setTextTypeFace(context: Context, attributes: AttributeSet?, textView: TextView) {
         if (textView.typeface != null && textView.typeface.style != 0) {
             return
         }
