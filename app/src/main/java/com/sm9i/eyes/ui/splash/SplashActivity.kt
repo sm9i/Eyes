@@ -14,4 +14,5 @@ class SplashActivity : BaseAppCompatActivity() {
     override fun getContentViewLayoutId(): Int = R.layout.activity_splash
 
 
+
 }
