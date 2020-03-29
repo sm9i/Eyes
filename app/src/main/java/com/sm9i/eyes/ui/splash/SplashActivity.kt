@@ -10,16 +10,15 @@ import kotlinx.android.synthetic.main.activity_splash.*
 class SplashActivity : BaseAppCompatActivity() {
     override fun initView(savedInstanceState: Bundle?) {
 
-        if(UserPreferences.getUserIsFirstLogin()){
+        if (UserPreferences.getUserIsFirstLogin()) {
             loadRootFragment(R.id.fl_container, VideoSplashFragment.newInstance())
-        }else{
+        } else {
             loadRootFragment(R.id.fl_container, CommonSplashFragment.newInstance())
         }
 
     }
 
     override fun getContentViewLayoutId(): Int = R.layout.activity_splash
-
 
 
 }

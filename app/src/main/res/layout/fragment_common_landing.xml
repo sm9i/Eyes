@@ -63,6 +63,7 @@
 
     <!--中间需要执行动画的部分-->
     <RelativeLayout
+
         android:id="@+id/rl_loading_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
