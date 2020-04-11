@@ -51,11 +51,11 @@ class BottomBarItemLayout : LinearLayout {
             if (mSelectedDrawable != null) {
                 iv_image.setImageDrawable(mSelectedDrawable)
                 tv_title.setTextColor(mSelectedTextColor)
-            } else {
-                if (mUnSelectedDrawable != null) {
-                    iv_image.setImageDrawable(mUnSelectedDrawable)
-                    tv_title.setTextColor(mUnSelectedTextColor)
-                }
+            }
+        } else {
+            if (mUnSelectedDrawable != null) {
+                iv_image.setImageDrawable(mUnSelectedDrawable)
+                tv_title.setTextColor(mUnSelectedTextColor)
             }
         }
     }

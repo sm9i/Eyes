@@ -11,5 +11,14 @@ class HomeFragment : BaseAppCompatFragment() {
         fun newInstance(): HomeFragment = HomeFragment()
     }
 
+
+    /**
+     * 滑动到顶部
+     */
+    fun scrollTop() {
+
+    }
+
+
     override fun getContentViewLayoutId(): Int = R.layout.fragment_home
 }

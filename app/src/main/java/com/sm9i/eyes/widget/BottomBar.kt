@@ -91,6 +91,10 @@ class BottomBar : LinearLayout {
 
     }
 
+    fun initialise() {
+        mBottomItemLayouts[mCurrentPosition].isSelected = true
+    }
+
     fun setOnTabSelectedListener(tabSelectedListener: TabSelectedListener) {
         mListener = tabSelectedListener
     }

@@ -59,14 +59,20 @@ class MainActivity : BaseAppCompatActivity() {
             addItem(discover)
             addItem(focus)
             addItem(mine)
+            initialise()
             setOnTabSelectedListener(object : BottomBar.TabSelectedListener {
                 override fun onTabSelected(position: Int, prePosition: Int) {
+                    showHideFragment(mFragments[position])
                 }
 
                 override fun onTabUnSelected(position: Int) {
                 }
 
                 override fun onTabReselected(position: Int) {
+                    if (position == FIRST) {
+                        val homeFragment = mFragments[FIRST] as HomeFragment
+                        homeFragment.scrollTop()
+                    }
                 }
 
             })
@@ -75,6 +81,5 @@ class MainActivity : BaseAppCompatActivity() {
     }
 
     override fun getContentViewLayoutId(): Int = R.layout.activity_main
-
 
 }
