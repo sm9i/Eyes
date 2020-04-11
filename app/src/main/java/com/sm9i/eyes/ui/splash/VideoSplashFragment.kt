@@ -52,6 +52,7 @@ class VideoSplashFragment : BaseAppCompatFragment() {
                 override fun onPageScrollStateChanged(state: Int) {
 
                 }
+
                 override fun onPageScrolled(
                     position: Int,
                     positionOffset: Float,
