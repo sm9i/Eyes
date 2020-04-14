@@ -22,6 +22,7 @@ class HomeFragment : BaseFragment<HomeView, HomePresenter>(), HomeView {
     }
 
     override fun loadDataSuccess(andyInfo: AndyInfo) {
+
     }
 
     override fun refreshDataSuccess(andyInfo: AndyInfo) {
