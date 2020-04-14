@@ -7,4 +7,13 @@ import com.sm9i.eyes.ui.base.BaseView
 interface HomeView : BaseView {
 
 
+    fun loadDataSuccess(andyInfo: AndyInfo)
+
+    fun refreshDataSuccess(andyInfo: AndyInfo)
+
+    fun loadMoreSuccess(andyInfo: AndyInfo)
+
+    fun showNoMore()
+
+
 }
