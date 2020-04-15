@@ -6,9 +6,13 @@ import com.sm9i.eyes.entiy.AndyInfo
 import com.sm9i.eyes.ui.base.BaseFragment
 import com.sm9i.eyes.ui.home.presenter.HomePresenter
 import com.sm9i.eyes.ui.home.view.HomeView
+import com.sm9i.eyes.widget.pull.zoom.PullToZoomBase
+import kotlinx.android.synthetic.main.fragment_home.*
 
 
 class HomeFragment : BaseFragment<HomeView, HomePresenter>(), HomeView {
+
+
 
     companion object {
         @JvmStatic
@@ -17,7 +21,14 @@ class HomeFragment : BaseFragment<HomeView, HomePresenter>(), HomeView {
 
     override fun initView(savedInstanceState: Bundle?) {
         super.initView(savedInstanceState)
-        ///初始化后请求数据
+        rv_home_recycler.setOnPullZoomListener(object : PullToZoomBase.OnPullZoomListener {
+            override fun onPullZooming(scrollValue: Int) {
+            }
+
+            override fun onPullZoomEnd() {
+            }
+
+        })
         mPresenter.loadCategoryData()
     }
 

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="85dp"
+    android:background="@color/white"
+    android:orientation="vertical">
+
+    <com.sm9i.eyes.widget.font.CustomFontTextView
+        android:id="@+id/tv_loading_msg"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/iv_head_outer"
+        android:layout_centerHorizontal="true"
+        android:text="@string/daily_elite_update"
+        android:textSize="12sp"
+        app:font_name="normal"
+    />
+
+    <ImageView
+        android:id="@+id/iv_head_outer"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/ic_eye_black_outer"/>
+
+    <ImageView
+        android:id="@+id/iv_head_inner"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/ic_eye_black_inner"/>
+
+</RelativeLayout>

@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:text="Home" />
+    <com.sm9i.eyes.widget.state.MultipleStateView
+        android:id="@+id/multiple_state_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.sm9i.eyes.widget.pull.zoom.PullToZoomRecyclerView
+            android:id="@+id/rv_home_recycler"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </com.sm9i.eyes.widget.state.MultipleStateView>
 </RelativeLayout>
