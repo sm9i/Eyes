@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rl_head_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:minHeight="40dp"
+    android:padding="10dp">
+
+    <com.facebook.drawee.view.SimpleDraweeView
+        android:id="@+id/iv_source"
+        android:layout_width="@dimen/default_card_source_icon_width"
+        android:layout_height="@dimen/default_card_source_icon_height"
+        android:layout_centerVertical="true"
+        android:visibility="gone" />
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toStartOf="@id/fl_right_container"
+        android:layout_toEndOf="@id/iv_source"
+        android:orientation="vertical">
+
+
+        <com.sm9i.eyes.widget.font.CustomFontTextView
+            android:id="@+id/tv_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textSize="15sp"
+            android:visibility="gone" />
+
+        <com.sm9i.eyes.widget.font.CustomFontTextView
+            android:id="@+id/tv_desc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/SecondaryText"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:font_name="normal" />
+
+        <com.sm9i.eyes.widget.font.CustomFontTextView
+            android:id="@+id/tv_sub_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="5dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxWidth="100dp"
+            android:maxLines="1"
+            android:textColor="@color/SecondaryText"
+            android:textSize="13sp"
+            android:visibility="gone"
+
+            />
+    </LinearLayout>
+
+
+    <FrameLayout
+        android:id="@+id/fl_right_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="@dimen/default_margin"
+        android:layout_marginEnd="@dimen/default_margin">
+
+        <com.sm9i.eyes.widget.font.CustomFontWriterText
+            android:id="@+id/tv_focus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/shape_black_border"
+            android:gravity="center"
+            android:letterSpacing="0.2"
+            android:text="@string/add_follow"
+            android:textSize="11sp"
+            android:visibility="gone"
+            app:font_name="normal" />
+
+        <ImageView
+            android:id="@+id/iv_more"
+            android:layout_width="@dimen/default_card_source_icon_width"
+            android:layout_height="@dimen/default_card_source_icon_height"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_action_more_arrow_dark"
+            android:visibility="gone" />
+
+
+        <com.sm9i.eyes.widget.font.CustomFontTextView
+            android:id="@+id/tv_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@color/SecondaryText"
+            android:textSize="10sp"
+            android:visibility="gone"
+            app:font_name="normal" />
+    </FrameLayout>
+</RelativeLayout>

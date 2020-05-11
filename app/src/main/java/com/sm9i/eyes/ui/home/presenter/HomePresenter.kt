@@ -50,7 +50,7 @@ class HomePresenter : BasePresenter<HomeView>() {
             mHomeModel.loadMoreAndyInfo(mNetPageUrl).autoDispose(mScopeProvider).subscribe(
                 {
                     mView?.showContent()
-                    if (it.nextPageUrl != null) {
+                    if (it.nextPageUrl == null) {
                         mView?.showNoMore()
                     } else {
                         mNetPageUrl = it.nextPageUrl

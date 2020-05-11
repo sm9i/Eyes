@@ -1,6 +1,6 @@
 package com.sm9i.eyes.ui.base.model
 
-import com.jennifer.andy.simpleeyes.rx.error.globalHandleError
+import com.sm9i.eyes.rx.error.globalHandleError
 import com.sm9i.eyes.entiy.AndyInfo
 import com.sm9i.eyes.net.Api
 import com.sm9i.eyes.rx.RxThreadHelper

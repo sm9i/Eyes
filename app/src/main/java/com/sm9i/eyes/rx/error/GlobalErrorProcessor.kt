@@ -1,6 +1,5 @@
-package com.jennifer.andy.simpleeyes.rx.error
-
-import com.jennifer.andy.simpleeyes.utils.toast
+package com.sm9i.eyes.rx.error
+import com.sm9i.eyes.utils.toast
 import retrofit2.HttpException
 
 

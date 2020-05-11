@@ -1,7 +1,7 @@
 package com.sm9i.eyes.ui.home.model
 
 import android.util.Log
-import com.jennifer.andy.simpleeyes.rx.error.globalHandleError
+import com.sm9i.eyes.rx.error.globalHandleError
 import com.sm9i.eyes.entiy.AndyInfo
 import com.sm9i.eyes.entiy.JenniferInfo
 import com.sm9i.eyes.net.Api

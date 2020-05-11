@@ -1,4 +1,4 @@
-package com.jennifer.andy.simpleeyes.rx.error
+package com.sm9i.eyes.rx.error
 
 import io.reactivex.Flowable
 import io.reactivex.functions.Function
