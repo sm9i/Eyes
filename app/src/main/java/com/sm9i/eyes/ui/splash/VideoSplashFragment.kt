@@ -7,7 +7,7 @@ import androidx.lifecycle.OnLifecycleEvent
 import androidx.viewpager.widget.ViewPager
 import com.sm9i.eyes.R
 import com.sm9i.eyes.UserPreferences
-import com.sm9i.eyes.player.render.IRenderView.AR_ASPECT_FIT_PARENT
+import com.sm9i.eyes.player.render.IRenderView.Companion.AR_ASPECT_FIT_PARENT
 import com.sm9i.eyes.ui.MainActivity
 import com.sm9i.eyes.ui.base.BaseAppCompatFragment
 import com.sm9i.eyes.utils.readyGoThenKillSelf
