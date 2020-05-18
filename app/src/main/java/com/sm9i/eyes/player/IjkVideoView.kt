@@ -274,7 +274,7 @@ class IjkVideoView @JvmOverloads constructor(
     /**
      * 播放状态
      */
-    fun isInPlaybackState(): Boolean {
+    private fun isInPlaybackState(): Boolean {
         return mMediaPlayer != null
                 && mCurrentState != STATE_ERROR
                 && mCurrentState != STATE_IDLE
@@ -291,6 +291,9 @@ class IjkVideoView @JvmOverloads constructor(
         }
     }
 
+    /**
+     * 更新进度
+     */
     private fun startProgressRunnable() {
         if (mDisposable == null || mDisposable!!.isDisposed) {
             mDisposable = Observable.interval(1, TimeUnit.SECONDS)
@@ -303,12 +306,11 @@ class IjkVideoView @JvmOverloads constructor(
                         val secondProgress = bufferPercentage * 10
                         val event =
                             VideoProgressEvent(duration, position, progress.toInt(), secondProgress)
-                        if(mMediaController!=null){
+                        if (mMediaController != null) {
                             mMediaController!!.updateProgressAndTime(event)
                         }
+                        RxBus.post(event)
                     }
-
-                    RxBus.post(event)
                 }
         }
     }
@@ -371,11 +373,9 @@ class IjkVideoView @JvmOverloads constructor(
     }
 
     override fun getAudioSessionId(): Int {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return 0
     }
 
-    override fun canPause(): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
+    override fun canPause()= mCanPause
 
 }

@@ -13,6 +13,14 @@
         <item name="android:windowBackground">@color/black</item>
         <item name="android:windowFullscreen">true</item>
     </style>
+    <!--进度条-->
+    <style name="ProgressBarStyle">
+        <item name="android:indeterminateOnly">false</item>
+        <item name="android:progressDrawable">@drawable/seek_bar_layer</item>
+        <item name="android:minHeight">2dp</item>
+        <item name="android:maxHeight">2dp</item>
+        <item name="android:mirrorForRtl">true</item>
+    </style>
 
 
 </resources>

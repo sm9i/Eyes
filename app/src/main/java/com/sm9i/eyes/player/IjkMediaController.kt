@@ -6,8 +6,12 @@ import android.media.AudioManager
 import android.util.Log
 import android.view.*
 import android.widget.FrameLayout
+import android.widget.MediaController
 import com.sm9i.eyes.R
+import com.sm9i.eyes.entiy.ContentBean
 import com.sm9i.eyes.event.VideoProgressEvent
+import com.sm9i.eyes.player.view.ControllerView
+import com.sm9i.eyes.player.view.ControllerViewFactory
 
 
 /**
@@ -16,6 +20,8 @@ import com.sm9i.eyes.event.VideoProgressEvent
  */
 class IjkMediaController(context: Context) : FrameLayout(context) {
 
+    private lateinit var player: MediaController.MediaPlayerControl
+
     private lateinit var decorLayoutParams: WindowManager.LayoutParams
     private lateinit var windowManager: WindowManager
     private lateinit var window: Window
@@ -23,6 +29,15 @@ class IjkMediaController(context: Context) : FrameLayout(context) {
     var controllerListener: ControllerListener? = null
     var controllerView: ControllerView? = null
     var isShowing = false//当前window是否展示
+
+    var currentVideoInfo: ContentBean? = null
+    //用来判断是否有下一个和上一页
+    var totalCount = 0
+    var currentIndex = 0
+    //当前展示的模式，默认是小屏
+    private var mode = ControllerViewFactory.TINY_MODE
+
+    private val mControllerViewFactory = ControllerViewFactory()
 
     companion object {
         //默认window消失时间
@@ -78,7 +93,10 @@ class IjkMediaController(context: Context) : FrameLayout(context) {
         if (isShowing) hide()
     }
 
-    private fun hide() {
+    /**
+     * 隐藏
+     */
+    fun hide() {
         try {
             removeCallbacks(mFadeOut)
             isShowing = false
@@ -94,6 +112,35 @@ class IjkMediaController(context: Context) : FrameLayout(context) {
 
     }
 
+    /**
+     * 一直显示window ???
+     */
+    fun showAllTheTime() {
+        show(3600000)
+        removeCallbacks(mFadeOut)
+    }
+
+
+    /**
+     * 将控制器显示在屏幕上，当到达时间会自动消失
+     * @param timeOut 如果 ==0 必须调动hide
+     */
+    @JvmOverloads
+    fun show(timeOut: Long = WINDOW_TIME_OUT) {
+        if (!isShowing) {
+            windowManager.addView(decorView, decorLayoutParams)
+            isShowing = true
+        }
+        if (timeOut != 0L) {
+            removeCallbacks(mFadeOut)
+            postDelayed(mFadeOut, timeOut)
+        }
+        controllerView?.display()
+        controllerListener?.onShowController(true)
+
+    }
+
+
     private val mTouchListener = OnTouchListener { _, event ->
         if (event.action == MotionEvent.ACTION_DOWN) {
             if (isShowing) {
@@ -102,6 +149,29 @@ class IjkMediaController(context: Context) : FrameLayout(context) {
             }
         }
         false
+    }
+
+
+    /**
+     * 是否有上个视频
+     */
+    fun isHavePreVideo() = totalCount > 0 && currentIndex > 0
+
+    /**
+     * 是否有下一个视频
+     */
+    fun isHaveNextVideo() = totalCount > 0 && currentIndex < totalCount
+
+    /**
+     * 根据现实模式切换ui
+     */
+    fun switchControllerView(mode: Int) {
+        this.mode = mode
+        removeAllViews()
+        controllerView = mControllerViewFactory.create(this.mode, context)
+        controllerView?.initControllerAndData(player, this, currentVideoInfo)
+        controllerView?.display()
+        addView(controllerView)
     }
 
     //页面按钮控制接口
