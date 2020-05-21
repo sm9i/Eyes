@@ -3,6 +3,7 @@ package com.sm9i.eyes.player
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.media.AudioManager
 import android.net.Uri
 import android.os.Build
 import android.util.AttributeSet
@@ -20,6 +21,8 @@ import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import tv.danmaku.ijk.media.player.IMediaPlayer
+import tv.danmaku.ijk.media.player.IjkMediaPlayer
+import java.io.IOException
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -67,6 +70,11 @@ class IjkVideoView @JvmOverloads constructor(
     private var mVideoRotationDegree = 0
 
     private var mDisposable: Disposable? = null
+    //一系列的监听
+    private var mOnCompletionListener: IMediaPlayer.OnCompletionListener? = null
+    private var mOnPreparedListener: IMediaPlayer.OnPreparedListener? = null
+    private var mOnErrorListener: IMediaPlayer.OnErrorListener? = null
+    private var mOnInfoListener: IMediaPlayer.OnInfoListener? = null
 
     //渲染回调
     private val mShCallback: IRenderView.IRenderCallBack = object : IRenderView.IRenderCallBack {
@@ -253,6 +261,147 @@ class IjkVideoView @JvmOverloads constructor(
             return
         }
         release(false)
+        val am = mAppContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        am.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
+        try {
+            mMediaPlayer = createPlayer()
+            mMediaPlayer?.setOnPreparedListener(mPreparedListener)
+            mMediaPlayer?.setOnVideoSizeChangedListener(mSizeChangedListener)
+            mMediaPlayer?.setOnCompletionListener(mCompletionListener)
+            mMediaPlayer?.setOnErrorListener(mErrorListener)
+            mMediaPlayer?.setOnInfoListener(mInfoListener)
+            mMediaPlayer?.setOnBufferingUpdateListener(mBufferingUpdateListener)
+            mMediaPlayer?.setOnSeekCompleteListener(mSeekCompleteListener)
+        } catch (ex: IOException) {
+
+        } catch (ex: IllegalArgumentException) {
+
+        }
+    }
+
+    /**
+     * 视频准备监听
+     */
+    private var mPreparedListener = IMediaPlayer.OnPreparedListener {
+        mCurrentState = STATE_PREPARED
+        if (mOnPreparedListener != null) {
+            mOnPreparedListener!!.onPrepared(mMediaPlayer)
+        }
+        if (mMediaController != null) {
+            mMediaController!!.isEnabled = true
+        }
+        mVideoWidth = it.videoWidth
+        mVideoHeight = it.videoHeight
+        val seekToPosition = mSeekWhenPrepared
+        if (seekToPosition != 0) {
+            seekTo(seekToPosition)
+        }
+        if (mVideoWidth != 0 && mVideoHeight != 0) {
+            mRenderView?.let {
+                mRenderView?.setVideoSize(mVideoWidth, mVideoHeight)
+                mRenderView?.setVideoSampleAspectRatio(mVideoSarNum, mVideoSarDen)
+                if (!mRenderView!!.shouldWaitForResize() || mSurfaceWidth == mVideoWidth && mSurfaceHeight == mVideoHeight) {
+                    if (mTargetState == STATE_PLAYING) {
+                        start()
+                        mMediaController?.firstShow()
+                    } else if (!isPlaying && (seekToPosition != 0 || currentPosition > 0)) {
+                        mMediaController?.show(0)
+                    }
+                }
+            }
+        } else {
+            if (mTargetState == STATE_PLAYING) {
+                start()
+            }
+        }
+    }
+
+    /**
+     * 大小发生变化的时候
+     */
+    private var mSizeChangedListener =
+        IMediaPlayer.OnVideoSizeChangedListener { mp, _, _, _, _ ->
+            mVideoWidth = mp.videoWidth
+            mVideoHeight = mp.videoHeight
+            mVideoSarNum = mp.videoSarNum
+            mVideoSarDen = mp.videoSarDen
+            if (mVideoWidth != 0 && mVideoHeight != 0) {
+                mRenderView?.let {
+                    mRenderView?.setVideoSize(mVideoWidth, mVideoHeight)
+                    mRenderView?.setVideoSampleAspectRatio(mVideoSarNum, mVideoSarDen)
+                }
+                requestLayout()
+            }
+        }
+
+    /**
+     * 完毕后
+     */
+    private var mCompletionListener = IMediaPlayer.OnCompletionListener {
+        mCurrentState = STATE_PLAYBACK_COMPLETED
+        mTargetState = STATE_PLAYBACK_COMPLETED
+        mMediaController?.hide()
+        mOnCompletionListener?.onCompletion(mMediaPlayer)
+    }
+    private val mSeekCompleteListener = IMediaPlayer.OnSeekCompleteListener { }
+    private val mBufferingUpdateListener = IMediaPlayer.OnBufferingUpdateListener { _, percent ->
+        mCurrentBufferPercentage = percent
+    }
+
+    private var mInfoListener = IMediaPlayer.OnInfoListener { mp, arg1, arg2 ->
+        mOnInfoListener?.onInfo(mp, arg1, arg2)
+        when (arg1) {
+            IMediaPlayer.MEDIA_INFO_VIDEO_TRACK_LAGGING -> Log.d(
+                TAG,
+                "MEDIA_INFO_VIDEO_TRACK_LAGGING:"
+            )
+            IMediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START -> Log.d(
+                TAG,
+                "MEDIA_INFO_VIDEO_RENDERING_START:"
+            )
+            IMediaPlayer.MEDIA_INFO_BUFFERING_START -> Log.d(TAG, "MEDIA_INFO_BUFFERING_START:")
+            IMediaPlayer.MEDIA_INFO_BUFFERING_END -> Log.d(TAG, "MEDIA_INFO_BUFFERING_END:")
+            IMediaPlayer.MEDIA_INFO_NETWORK_BANDWIDTH -> Log.d(
+                TAG,
+                "MEDIA_INFO_NETWORK_BANDWIDTH: $arg2"
+            )
+            IMediaPlayer.MEDIA_INFO_BAD_INTERLEAVING -> Log.d(TAG, "MEDIA_INFO_BAD_INTERLEAVING:")
+            IMediaPlayer.MEDIA_INFO_NOT_SEEKABLE -> Log.d(TAG, "MEDIA_INFO_NOT_SEEKABLE:")
+            IMediaPlayer.MEDIA_INFO_METADATA_UPDATE -> Log.d(TAG, "MEDIA_INFO_METADATA_UPDATE:")
+            IMediaPlayer.MEDIA_INFO_UNSUPPORTED_SUBTITLE -> Log.d(
+                TAG,
+                "MEDIA_INFO_UNSUPPORTED_SUBTITLE:"
+            )
+            IMediaPlayer.MEDIA_INFO_SUBTITLE_TIMED_OUT -> Log.d(
+                TAG,
+                "MEDIA_INFO_SUBTITLE_TIMED_OUT:"
+            )
+            IMediaPlayer.MEDIA_INFO_VIDEO_ROTATION_CHANGED -> {
+                mVideoRotationDegree = arg2
+                Log.d(TAG, "MEDIA_INFO_VIDEO_ROTATION_CHANGED: $arg2")
+                if (mRenderView != null) mRenderView!!.setVideoRotation(arg2)
+            }
+            IMediaPlayer.MEDIA_INFO_AUDIO_RENDERING_START -> Log.d(
+                TAG,
+                "MEDIA_INFO_AUDIO_RENDERING_START:"
+            )
+        }
+        true
+    }
+    /**
+     * error
+     */
+    private var mErrorListener = IMediaPlayer.OnErrorListener { _, framework_err, impl_err ->
+        Log.d(TAG, "Error: $framework_err,$impl_err")
+
+        mCurrentState = STATE_ERROR
+        mTargetState = STATE_ERROR
+        if (mOnErrorListener!!.onError(mMediaPlayer, framework_err, impl_err)) {
+            return@OnErrorListener true
+        }
+        true
+
+
     }
 
     private fun releaseWithoutStop() {
@@ -267,7 +416,15 @@ class IjkVideoView @JvmOverloads constructor(
             mMediaPlayer!!.reset()
             mMediaPlayer!!.release()
             mMediaPlayer = null
-
+            mMediaController!!.hide()
+            if (clearTargetState) {
+                mTargetState = STATE_IDLE
+            }
+            setRenderView(null)
+            initRenders()
+            val am = mAppContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            am.abandonAudioFocus(null)
+            cancelProgressRunnable()
         }
     }
 
@@ -376,6 +533,25 @@ class IjkVideoView @JvmOverloads constructor(
         return 0
     }
 
-    override fun canPause()= mCanPause
+    override fun canPause() = mCanPause
 
+    private fun createPlayer(): IMediaPlayer? {
+        if (mUri != null) {
+            return IjkMediaPlayer().apply {
+                IjkMediaPlayer.native_setLogLevel(IjkMediaPlayer.IJK_LOG_DEBUG)
+                setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec", 0)
+                setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "opensles", 0)
+                setOption(
+                    IjkMediaPlayer.OPT_CATEGORY_PLAYER,
+                    "overlay-format",
+                    IjkMediaPlayer.SDL_FCC_RV32.toLong()
+                )
+                setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", 1)
+                setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", 0)
+                setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "http-detect-range-support", 0)
+                setOption(IjkMediaPlayer.OPT_CATEGORY_CODEC, "skip_loop_filter", 48)
+            }
+        }
+        return null
+    }
 }

@@ -1,5 +1,6 @@
 package com.sm9i.eyes.player
 
+import android.app.Activity
 import android.content.Context
 import android.graphics.PixelFormat
 import android.media.AudioManager
@@ -29,6 +30,7 @@ class IjkMediaController(context: Context) : FrameLayout(context) {
     var controllerListener: ControllerListener? = null
     var controllerView: ControllerView? = null
     var isShowing = false//当前window是否展示
+    private lateinit var mAnchor: View//锚点view，??
 
     var currentVideoInfo: ContentBean? = null
     //用来判断是否有下一个和上一页
@@ -86,6 +88,55 @@ class IjkMediaController(context: Context) : FrameLayout(context) {
         requestFocus()
     }
 
+
+    /**
+     * 初始化数据
+     * @param currentIndex 当前视频角标
+     * @param totalCount 视频集合总数
+     * @param currentVideoInfo 当前视频信息
+     */
+    fun initData(currentIndex: Int, totalCount: Int, currentVideoInfo: ContentBean?) {
+        this.currentIndex = currentIndex
+        this.totalCount = totalCount
+        this.currentVideoInfo = currentVideoInfo
+    }
+
+    private fun updateFloatingWindowLayout() {
+        val anchorPos = IntArray(2)
+        mAnchor.getLocationOnScreen(anchorPos)
+        //重新测
+        decorView.measure(
+            MeasureSpec.makeMeasureSpec(mAnchor.width, MeasureSpec.AT_MOST),
+            MeasureSpec.makeMeasureSpec(mAnchor.height, MeasureSpec.AT_MOST)
+        )
+        decorLayoutParams.apply {
+            width = mAnchor.width
+            x = anchorPos[0]
+            y = anchorPos[1]
+            height = mAnchor.height
+        }
+    }
+
+    fun setAnchorView(view: View) {
+        mAnchor = view
+        mAnchor.addOnLayoutChangeListener(mLayoutChangeListener)
+        updateFloatingWindowLayout()
+    }
+
+    fun setMediaPLayer(player: MediaController.MediaPlayerControl) {
+        this.player = player
+        switchControllerView(mode)
+    }
+
+    /**
+     * 当view布局发生变化  重新设置window布局
+     */
+    private val mLayoutChangeListener =
+        OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            updateFloatingWindowLayout()
+            if (isShowing) windowManager.updateViewLayout(decorView, decorLayoutParams)
+
+        }
     /**
      * 隐藏控制view
      */
@@ -100,16 +151,15 @@ class IjkMediaController(context: Context) : FrameLayout(context) {
         try {
             removeCallbacks(mFadeOut)
             isShowing = false
-
-
+            controllerListener?.onShowController(false)
+            windowManager.removeView(decorView)
         } catch (e: IllegalArgumentException) {
             Log.w("MediaController", "already removed")
         }
     }
 
     fun updateProgressAndTime(event: VideoProgressEvent) {
-        controllerListener
-
+        controllerView?.updateProgressAndTime(event!!)
     }
 
     /**
@@ -118,6 +168,15 @@ class IjkMediaController(context: Context) : FrameLayout(context) {
     fun showAllTheTime() {
         show(3600000)
         removeCallbacks(mFadeOut)
+    }
+
+    /**
+     * 第一次展示，不显示控制层
+     */
+    fun firstShow() {
+        if (isShowing && controllerView != null) {
+            controllerView?.display()
+        }
     }
 
 
@@ -153,6 +212,21 @@ class IjkMediaController(context: Context) : FrameLayout(context) {
 
 
     /**
+     * 展示错误布局
+     */
+    fun showErrorView() {
+        if (!isShowing) {
+            controllerView?.showErrorView()
+            windowManager.addView(decorView, decorLayoutParams)
+            isShowing = true
+        }
+    }
+
+    fun resetType() {
+        controllerView?.showContent()
+    }
+
+    /**
      * 是否有上个视频
      */
     fun isHavePreVideo() = totalCount > 0 && currentIndex > 0
@@ -172,6 +246,20 @@ class IjkMediaController(context: Context) : FrameLayout(context) {
         controllerView?.initControllerAndData(player, this, currentVideoInfo)
         controllerView?.display()
         addView(controllerView)
+    }
+
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val keyCode = event.keyCode
+        val uniqueDown = (event.repeatCount == 0 && event.action == KeyEvent.ACTION_DOWN)
+        if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_MENU) {
+            if (uniqueDown) {
+                hide()
+                if (context is Activity) (context as Activity).finish()
+            }
+            return true
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     //页面按钮控制接口
