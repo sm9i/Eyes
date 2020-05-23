@@ -4,11 +4,15 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.media.AudioManager
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
+import android.text.TextUtils
 import android.util.AttributeSet
 import android.util.Log
 import android.view.Gravity
+import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.MediaController
@@ -16,12 +20,15 @@ import com.sm9i.eyes.event.VideoProgressEvent
 import com.sm9i.eyes.player.render.IRenderView
 import com.sm9i.eyes.player.render.SurfaceRenderView
 import com.sm9i.eyes.player.render.TextureRenderView
+import com.sm9i.eyes.player.view.ControllerViewFactory
 import com.sm9i.eyes.rx.RxBus
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import tv.danmaku.ijk.media.player.IMediaPlayer
 import tv.danmaku.ijk.media.player.IjkMediaPlayer
+import tv.danmaku.ijk.media.player.misc.IMediaDataSource
+import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -35,6 +42,8 @@ class IjkVideoView @JvmOverloads constructor(
 
 
     private var mUri: Uri? = null
+    //视频header
+    private var mHeaders: Map<String, String>? = null
     private var mMediaPlayer: IMediaPlayer? = null
     private var mMediaController: IjkMediaController? = null
     private lateinit var mAppContext: Context
@@ -75,6 +84,7 @@ class IjkVideoView @JvmOverloads constructor(
     private var mOnPreparedListener: IMediaPlayer.OnPreparedListener? = null
     private var mOnErrorListener: IMediaPlayer.OnErrorListener? = null
     private var mOnInfoListener: IMediaPlayer.OnInfoListener? = null
+    var screenState = ControllerViewFactory.TINY_MODE
 
     //渲染回调
     private val mShCallback: IRenderView.IRenderCallBack = object : IRenderView.IRenderCallBack {
@@ -93,7 +103,6 @@ class IjkVideoView @JvmOverloads constructor(
             width: Int,
             height: Int
         ) {
-
             if (holder.renderView !== mRenderView) {
                 Log.e(TAG, "onSurfaceChanged: unmatched render callback\n")
                 return
@@ -244,7 +253,7 @@ class IjkVideoView @JvmOverloads constructor(
     /**
      * surface绑定
      */
-    private fun bindSurfaceHolder(mp: IMediaPlayer?, holder: IRenderView.ISurfaceHolder) {
+    private fun bindSurfaceHolder(mp: IMediaPlayer?, holder: IRenderView.ISurfaceHolder?) {
         if (mp == null) return
         if (holder == null) {
             mp.setDisplay(null)
@@ -272,10 +281,37 @@ class IjkVideoView @JvmOverloads constructor(
             mMediaPlayer?.setOnInfoListener(mInfoListener)
             mMediaPlayer?.setOnBufferingUpdateListener(mBufferingUpdateListener)
             mMediaPlayer?.setOnSeekCompleteListener(mSeekCompleteListener)
+            mCurrentBufferPercentage = 0
+            val scheme = mUri?.scheme
+            //设置数据源
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && (TextUtils.isEmpty(scheme) || scheme.equals(
+                    "file",
+                    ignoreCase = true
+                ))
+            ) {
+                val dataSource: IMediaDataSource = FileMediaDataSource(File(mUri.toString()))
+                mMediaPlayer?.setDataSource(dataSource)
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                mMediaPlayer?.setDataSource(mAppContext, mUri, mHeaders)
+            } else {
+                mMediaPlayer?.dataSource = mUri.toString()
+            }
+            bindSurfaceHolder(mMediaPlayer, mSurfaceHolder)
+            mMediaPlayer?.setAudioStreamType(AudioManager.STREAM_MUSIC)
+            mMediaPlayer?.setScreenOnWhilePlaying(true)
+            mMediaPlayer?.prepareAsync()
+            mCurrentState = STATE_PREPARING
+            attachMediaController()
         } catch (ex: IOException) {
-
+            Log.w(TAG, "Unable to open content: $mUri", ex)
+            mCurrentState = STATE_ERROR
+            mTargetState = STATE_ERROR
+            mErrorListener.onError(mMediaPlayer, MediaPlayer.MEDIA_ERROR_UNKNOWN, 0)
         } catch (ex: IllegalArgumentException) {
-
+            Log.w(TAG, "Unable to open content: $mUri", ex)
+            mCurrentState = STATE_ERROR
+            mTargetState = STATE_ERROR
+            mErrorListener.onError(mMediaPlayer, MediaPlayer.MEDIA_ERROR_UNKNOWN, 0)
         }
     }
 
@@ -408,6 +444,15 @@ class IjkVideoView @JvmOverloads constructor(
         if (mMediaPlayer != null) mMediaPlayer!!.setDisplay(null)
     }
 
+    private fun attachMediaController() {
+        if (mMediaPlayer != null && mMediaController != null) {
+            mMediaController?.setMediaPLayer(this)
+            val anchorView = if (this.parent is View) this.parent as View else this
+            mMediaController?.setAnchorView(anchorView)
+            mMediaController?.isEnabled = isInPlaybackState()
+        }
+    }
+
     /**
      * 释放播放器
      */
@@ -431,11 +476,18 @@ class IjkVideoView @JvmOverloads constructor(
     /**
      * 播放状态
      */
-    private fun isInPlaybackState(): Boolean {
+     fun isInPlaybackState(): Boolean {
         return mMediaPlayer != null
                 && mCurrentState != STATE_ERROR
                 && mCurrentState != STATE_IDLE
                 && mCurrentState != STATE_PREPARING
+    }
+
+    /**
+     * 获取controller
+     */
+    fun getMediaController(): IjkMediaController? {
+        return mMediaController
     }
 
     /**
@@ -447,6 +499,57 @@ class IjkVideoView @JvmOverloads constructor(
             mDisposable = null
         }
     }
+
+    /**
+     * 设置视频路径
+     * @param path 视频路径
+     */
+    fun setVideoPath(path: String?) {
+        setVideoURI(Uri.parse(path))
+    }
+
+    /**
+     * 设置视频URI
+     * @param uri 视频URI
+     */
+    private fun setVideoURI(uri: Uri) {
+        setVideoURI(uri, null)
+    }
+
+    /**
+     * 设置带header的视频URI
+     * @param uri 视频URI
+     * @param headers URI请求的header
+     */
+    private fun setVideoURI(uri: Uri, headers: Map<String, String>?) {
+        mUri = uri
+        mHeaders = headers
+        mSeekWhenPrepared = 0
+        openVideo()
+        requestLayout()
+        invalidate()
+    }
+
+    /**
+     * 停止播放
+     */
+    fun stopPlayback() {
+        mMediaPlayer?.let {
+            mMediaPlayer?.stop()
+            mMediaPlayer?.release()
+            mMediaPlayer = null
+            mCurrentState = STATE_IDLE
+            mTargetState = STATE_IDLE
+            mMediaController?.let {
+                mMediaController?.hide()
+                mMediaController = null
+            }
+            val am = mAppContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            am.abandonAudioFocus(null)
+            cancelProgressRunnable()
+        }
+    }
+
 
     /**
      * 更新进度
@@ -470,6 +573,24 @@ class IjkVideoView @JvmOverloads constructor(
                     }
                 }
         }
+    }
+
+
+    fun toggleMediaControlsVisible() {
+        if (mMediaController!!.isShowing) {
+            mMediaController?.hide()
+        } else {
+            mMediaController?.show()
+        }
+    }
+
+    fun suspend() {
+        release(false)
+        cancelProgressRunnable()
+    }
+
+    fun resume() {
+        openVideo()
     }
 
     /**
@@ -534,6 +655,49 @@ class IjkVideoView @JvmOverloads constructor(
     }
 
     override fun canPause() = mCanPause
+
+    override fun onTrackballEvent(event: MotionEvent?): Boolean {
+        if (isInPlaybackState() && mMediaController != null) {
+            toggleMediaControlsVisible()
+        }
+        return false
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        val isKeyCodeSupported =
+            keyCode != KeyEvent.KEYCODE_BACK && keyCode != KeyEvent.KEYCODE_VOLUME_UP && keyCode != KeyEvent.KEYCODE_VOLUME_DOWN && keyCode != KeyEvent.KEYCODE_VOLUME_MUTE && keyCode != KeyEvent.KEYCODE_MENU && keyCode != KeyEvent.KEYCODE_CALL && keyCode != KeyEvent.KEYCODE_ENDCALL
+        if (isInPlaybackState() && isKeyCodeSupported && mMediaController != null) {
+            if (keyCode == KeyEvent.KEYCODE_HEADSETHOOK ||
+                keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
+            ) {
+                if (mMediaPlayer!!.isPlaying) {
+                    pause()
+                    mMediaController!!.show()
+                } else {
+                    start()
+                    mMediaController!!.hide()
+                }
+                return true
+            } else if (keyCode == KeyEvent.KEYCODE_MEDIA_PLAY) {
+                if (!mMediaPlayer!!.isPlaying) {
+                    start()
+                    mMediaController!!.hide()
+                }
+                return true
+            } else if (keyCode == KeyEvent.KEYCODE_MEDIA_STOP
+                || keyCode == KeyEvent.KEYCODE_MEDIA_PAUSE
+            ) {
+                if (mMediaPlayer!!.isPlaying) {
+                    pause()
+                    mMediaController!!.show()
+                }
+                return true
+            } else {
+                toggleMediaControlsVisible()
+            }
+        }
+        return super.onKeyDown(keyCode, event)
+    }
 
     private fun createPlayer(): IMediaPlayer? {
         if (mUri != null) {
