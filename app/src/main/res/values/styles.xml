@@ -21,6 +21,12 @@
         <item name="android:maxHeight">2dp</item>
         <item name="android:mirrorForRtl">true</item>
     </style>
+    <!--视频声音和亮度进度条-->
+    <style name="VideoProgress" parent="@android:style/Theme.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
 
 
 </resources>

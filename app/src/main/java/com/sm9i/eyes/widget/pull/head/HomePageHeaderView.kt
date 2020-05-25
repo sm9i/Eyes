@@ -11,10 +11,12 @@ import com.sm9i.eyes.entiy.TopIssue
 import com.sm9i.eyes.ui.base.BaseFragment
 import com.sm9i.eyes.ui.home.DailyEliteActivity
 import com.sm9i.eyes.ui.search.SearchHotActivity
+import com.sm9i.eyes.ui.video.VideoDetailActivity
 import com.sm9i.eyes.utils.readyGo
 import com.sm9i.eyes.widget.image.imageloader.FrescoImageLoader
 import com.youth.banner.BannerConfig
 import kotlinx.android.synthetic.main.layout_category_head_view.view.*
+import java.util.ArrayList
 
 
 class HomePageHeaderView : FrameLayout {
@@ -83,8 +85,8 @@ class HomePageHeaderView : FrameLayout {
             start()
             setDelayTime(6000)
             setOnBannerListener {
-                val ite = mTopIssue.data.itemList[it]
-                ///跳转到视频页面
+                val item = mTopIssue.data.itemList[it]
+                VideoDetailActivity.start(context, item.data, videoListInfo as ArrayList, 0)
             }
         }
 

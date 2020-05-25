@@ -5,8 +5,10 @@ import com.chad.library.adapter.base.BaseViewHolder
 import com.chad.library.adapter.base.util.MultiTypeDelegate
 import com.sm9i.eyes.R
 import com.sm9i.eyes.entiy.Content
+import com.sm9i.eyes.ui.video.VideoDetailActivity
 import com.sm9i.eyes.widget.EliteImageView
 import com.sm9i.eyes.widget.ItemHeaderView
+import java.util.ArrayList
 
 
 open class BaseDataAdapter(data: MutableList<Content>) :
@@ -133,6 +135,12 @@ open class BaseDataAdapter(data: MutableList<Content>) :
                 setDailyVisible(info.content!!.data.library == "DAILY")
                 setOnClickListener {
                     //跳转到视频详情
+                    VideoDetailActivity.start(
+                        mContext!!,
+                        item.data.content?.data!!,
+                        mData as ArrayList,
+                        mData.indexOf(item)
+                    )
                 }
             }
         }

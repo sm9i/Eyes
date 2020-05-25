@@ -2,7 +2,10 @@ package com.sm9i.eyes.player
 
 import android.app.Dialog
 import android.content.Context
+import android.content.pm.ActivityInfo
+import android.graphics.drawable.ColorDrawable
 import android.media.AudioManager
+import android.provider.Settings
 import android.util.AttributeSet
 import android.view.*
 import android.widget.FrameLayout
@@ -10,8 +13,9 @@ import android.widget.ProgressBar
 import com.facebook.drawee.view.SimpleDraweeView
 import com.sm9i.eyes.R
 import com.sm9i.eyes.player.view.ControllerViewFactory
-import com.sm9i.eyes.utils.getScreenHeight
+import com.sm9i.eyes.utils.*
 import kotlinx.android.synthetic.main.layout_ijk_wrapper.view.*
+import tv.danmaku.ijk.media.player.IMediaPlayer
 import kotlin.math.abs
 
 
@@ -47,6 +51,7 @@ class IjkVideoViewWrapper @JvmOverloads constructor(
         mGestureDetector = GestureDetector(context, this)
         mAudioManager = getContext().getSystemService(Context.AUDIO_SERVICE) as AudioManager
         mScreenHeight = getContext().getScreenHeight()
+
     }
 
     /**
@@ -102,7 +107,6 @@ class IjkVideoViewWrapper @JvmOverloads constructor(
 
 
     override fun onShowPress(e: MotionEvent?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override fun onSingleTapUp(e: MotionEvent?): Boolean {
@@ -159,6 +163,56 @@ class IjkVideoViewWrapper @JvmOverloads constructor(
     }
 
     /**
+     * 显示亮度
+     */
+    private fun showLightDialog(deltaY: Float) {
+        isShowLight = true
+        var screenBrightness = 0f
+        //记录滑动前的亮度
+        val lp = getWindow(context)!!.attributes
+        if (lp.screenBrightness < 0) {
+            try {
+                screenBrightness = Settings.System.getInt(
+                    context.contentResolver,
+                    Settings.System.SCREEN_BRIGHTNESS
+                ).toFloat()
+            } catch (e: Settings.SettingNotFoundException) {
+                e.printStackTrace()
+            }
+        } else {
+            screenBrightness = lp.screenBrightness
+        }
+        if (deltaY < 0) { //向下滑动
+            screenBrightness -= 0.03f
+        } else { //向下滑动
+            screenBrightness += 0.03f
+        }
+        when {
+            screenBrightness >= 1 -> {
+                lp.screenBrightness = 1f
+            }
+            screenBrightness < 0 -> {
+                lp.screenBrightness = 0.1f
+            }
+            else -> {
+                lp.screenBrightness = screenBrightness
+            }
+        }
+        getWindow(context)!!.attributes = lp
+        //设置亮度百分比
+        if (mLightProgress == null) {
+            val view = LayoutInflater.from(context).inflate(R.layout.dialog_light_controller, null)
+            mLightProgress = view.findViewById(R.id.pb_light_progress)
+            mLightDialog = createDialogWithView(view, Gravity.END or Gravity.CENTER_VERTICAL)
+        }
+        if (!mLightDialog!!.isShowing) {
+            mLightDialog?.show()
+        }
+        val lightPercent = (screenBrightness * 100f).toInt()
+        mLightProgress?.progress = lightPercent
+    }
+
+    /**
      *显示声音对话框
      */
     private fun showVolumeDialog(deltaY: Float) {
@@ -171,13 +225,154 @@ class IjkVideoViewWrapper @JvmOverloads constructor(
             currentVideoVolume++
         }
         mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, currentVideoVolume, 0)
-        if(mVolumeDialog==null){
-            val view =LayoutInflater.from(context).inflate()
+        if (mVolumeDialog == null) {
+            val view =
+                LayoutInflater.from(context).inflate(R.layout.dialog_volume_controller, null)
+            mVolumeProgress = view.findViewById(R.id.pb_volume_progress)
+            mVolumeDialog = createDialogWithView(view, Gravity.START or Gravity.CENTER_VERTICAL)
+        }
+        if (!mVolumeDialog!!.isShowing) {
+            mVolumeDialog!!.show()
+        }
+        //设置进度条
+        val nextVolume = mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        var volumePercent = (nextVolume * 1f / maxVolume * 100f).toInt()
+        if (volumePercent > 100) {
+            volumePercent = 100
+        } else if (volumePercent < 0) {
+            volumePercent = 0
+        }
+        mVolumeProgress!!.progress = volumePercent
+    }
+
+    private fun createDialogWithView(localView: View, gravity: Int): Dialog {
+        return Dialog(context, R.style.VideoProgress).apply {
+            setContentView(localView)
+            window?.apply {
+                addFlags(Window.FEATURE_ACTION_BAR)
+                addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL)
+                addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+                setLayout(-2, -2)
+                setBackgroundDrawable(ColorDrawable())
+                val localLayoutParams = attributes
+                localLayoutParams.gravity = gravity
+                attributes = localLayoutParams
+            }
+
         }
     }
 
     override fun onLongPress(e: MotionEvent?) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    fun enterFullScreen() {
+        hideActionBar(context)
+        getActivity(context)!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        val contentView = getActivity(context)!!.findViewById<ViewGroup>(Window.ID_ANDROID_CONTENT)
+        mParent = parent as ViewGroup
+        mParent!!.removeView(this)
+        video_view.screenState = ControllerViewFactory.FULL_SCREEN_MODE
+        val params = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+        contentView.addView(this, params)
+    }
+
+    /**
+     * 退出全屏
+     */
+    fun exitFullScreen() {
+        showActionBar(context)
+        val contentView = getActivity(context)!!.findViewById<ViewGroup>(Window.ID_ANDROID_CONTENT)
+        getActivity(context)!!.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        contentView.removeView(this)
+        video_view.screenState = ControllerViewFactory.TINY_MODE
+        val params = ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        mParent!!.addView(this, params)
+    }
+
+    fun setVideoPath(playUrl: String) {
+        video_view.setVideoPath(playUrl)
+    }
+
+    fun start() {
+        video_view.start()
+    }
+
+    fun setMediaController(controller: IjkMediaController) {
+        video_view.setMediaController(controller)
+    }
+
+    fun toggleAspectRatio(currentAspectRatio: Int) {
+        video_view.toggleAspectRatio(currentAspectRatio)
+    }
+
+    fun setOnPreparedListener(onPreparedListener: IMediaPlayer.OnPreparedListener) {
+        video_view.setOnPreparedListener(onPreparedListener)
+    }
+
+    fun setOnErrorListener(onErrorListener: IMediaPlayer.OnErrorListener) {
+        video_view.setOnErrorListener(onErrorListener)
+    }
+
+
+    fun setOnCompletionListener(onCompletionListener: IMediaPlayer.OnCompletionListener) {
+        video_view.setOnCompletionListener(onCompletionListener)
+    }
+
+    fun stopPlayback() {
+        video_view.stopPlayback()
+    }
+
+    fun isPLaying(): Boolean {
+        return video_view.isPlaying
+    }
+
+    fun pause() {
+        video_view.pause()
+    }
+
+    fun release(clearTargetState: Boolean) {
+        video_view.release(clearTargetState)
+    }
+
+    fun showErrorView(): Boolean {
+        progress.handler.postDelayed(
+            {
+                progress.visibility = View.GONE
+                video_view.getMediaController()!!.showErrorView()
+            }, 1000
+        )
+        return false
+    }
+
+    fun resetType() {
+        video_view.getMediaController()?.resetType()
+    }
+
+    fun setDragging(dragging: Boolean) {
+        video_view.getMediaController()!!.controllerView!!.isDragging = dragging
+    }
+
+    fun isDragging(): Boolean {
+        return video_view.getMediaController()!!.controllerView!!.isDragging
+    }
+
+    fun showControllerAllTheTIme() {
+        video_view.getMediaController()?.showAllTheTime()
+    }
+
+    fun getDuration(): Int {
+        return video_view.duration
+    }
+
+    fun showController() {
+        video_view.getMediaController()!!.show()
+    }
+
+    fun seekTo(seek: Int) {
+        video_view.seekTo(seek)
     }
 
 

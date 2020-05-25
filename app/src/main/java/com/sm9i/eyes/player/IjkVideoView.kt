@@ -456,7 +456,7 @@ class IjkVideoView @JvmOverloads constructor(
     /**
      * 释放播放器
      */
-    private fun release(clearTargetState: Boolean) {
+    fun release(clearTargetState: Boolean) {
         if (mMediaPlayer != null) {
             mMediaPlayer!!.reset()
             mMediaPlayer!!.release()
@@ -476,7 +476,7 @@ class IjkVideoView @JvmOverloads constructor(
     /**
      * 播放状态
      */
-     fun isInPlaybackState(): Boolean {
+    fun isInPlaybackState(): Boolean {
         return mMediaPlayer != null
                 && mCurrentState != STATE_ERROR
                 && mCurrentState != STATE_IDLE
@@ -592,6 +592,30 @@ class IjkVideoView @JvmOverloads constructor(
     fun resume() {
         openVideo()
     }
+
+    fun setOnCompletionListener(l: IMediaPlayer.OnCompletionListener?) {
+        mOnCompletionListener = l
+    }
+
+    fun setOnPreparedListener(l: IMediaPlayer.OnPreparedListener?) {
+        mOnPreparedListener = l
+    }
+
+    fun setOnErrorListener(l: IMediaPlayer.OnErrorListener?) {
+        mOnErrorListener = l
+    }
+
+    fun toggleAspectRatio(currentAspectRatio: Int): Int {
+        mRenderView?.setAspectRatio(currentAspectRatio)
+        mCurrentAspectRatio = currentAspectRatio
+        return mCurrentAspectRatio
+    }
+
+    fun setMediaController(controller: IjkMediaController) {
+        mMediaController = controller
+        attachMediaController()
+    }
+
 
     /**
      * 是否在播放
