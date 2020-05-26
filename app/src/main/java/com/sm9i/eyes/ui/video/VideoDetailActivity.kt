@@ -2,18 +2,26 @@ package com.sm9i.eyes.ui.video
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.media.MediaPlayer
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
+import android.widget.SeekBar
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.sm9i.eyes.R
 import com.sm9i.eyes.entiy.Content
 import com.sm9i.eyes.entiy.ContentBean
+import com.sm9i.eyes.event.VideoProgressEvent
 import com.sm9i.eyes.net.Extras
 import com.sm9i.eyes.player.IjkMediaController
 import com.sm9i.eyes.player.render.IRenderView
+import com.sm9i.eyes.rx.RxBus
 import com.sm9i.eyes.ui.base.BaseActivity
 import com.sm9i.eyes.ui.video.presenter.VideoDetailPresenter
 import com.sm9i.eyes.ui.video.view.VideoDetailView
+import io.reactivex.functions.Consumer
 import kotlinx.android.synthetic.main.activity_video_detail.*
 import tv.danmaku.ijk.media.player.IMediaPlayer
 import java.util.ArrayList
@@ -26,6 +34,9 @@ class VideoDetailActivity : BaseActivity<VideoDetailView, VideoDetailPresenter>(
     private lateinit var mCurrentVideoInfo: ContentBean
     private var mCurrentIndex = 0
     private lateinit var mVideoListInfo: MutableList<Content>
+
+    private var mBackPressed = false
+    private var mChangeProgress: Int = 0
 
     companion object {
 
@@ -52,7 +63,8 @@ class VideoDetailActivity : BaseActivity<VideoDetailView, VideoDetailPresenter>(
     override fun initView(savedInstanceState: Bundle?) {
         initPlaceHolder()
         initMediaController()
-
+        initSeekBar()
+        registerProgressEvent()
         playVideo()
     }
 
@@ -60,6 +72,41 @@ class VideoDetailActivity : BaseActivity<VideoDetailView, VideoDetailPresenter>(
         mCurrentVideoInfo = extras.getSerializable(Extras.VIDEO_INFO) as ContentBean
         mVideoListInfo = extras.getSerializable(Extras.VIDEO_LIST_INFO) as ArrayList<Content>
         mCurrentIndex = extras.getInt(Extras.VIDEO_INFO_INDEX, 0)
+    }
+
+    /**
+     * 注册进度条监听
+     */
+    private fun registerProgressEvent() {
+        RxBus.register(this, VideoProgressEvent::class.java, Consumer {
+            if (!video_view_wrapper.isDragging()) {
+                seek_bar.progress = it.progress
+            }
+            seek_bar.secondaryProgress = it.secondaryProgress
+        })
+    }
+
+    private fun initSeekBar() {
+        seek_bar.thumb = ColorDrawable(Color.TRANSPARENT)
+        seek_bar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(bar: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) {
+                    mChangeProgress = progress
+                }
+            }
+
+            override fun onStartTrackingTouch(p0: SeekBar?) {
+                video_view_wrapper.setDragging(true)
+                video_view_wrapper.showControllerAllTheTIme()
+            }
+
+            override fun onStopTrackingTouch(p0: SeekBar?) {
+                val newPosition = video_view_wrapper.getDuration() * mChangeProgress / 1000L
+                video_view_wrapper.seekTo(newPosition.toInt())
+                video_view_wrapper.showController()
+                video_view_wrapper.setDragging(false)
+            }
+        })
     }
 
     private fun initMediaController() {
@@ -93,15 +140,16 @@ class VideoDetailActivity : BaseActivity<VideoDetailView, VideoDetailPresenter>(
             override fun onErrorViewClick() {
                 ijkMediaController.hide()
                 refreshVideo(getFutureVideo())
-
             }
 
             override fun onShowController(isShowController: Boolean) {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                seek_bar.thumb = if (isShowController)
+                    getDrawable(R.drawable.ic_player_progress_handle)
+                else ColorDrawable(Color.TRANSPARENT)
             }
 
             override fun onDoubleTap() {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                //双击
             }
 
         }
@@ -122,13 +170,14 @@ class VideoDetailActivity : BaseActivity<VideoDetailView, VideoDetailPresenter>(
 
             //播放完毕
             setOnCompletionListener(IMediaPlayer.OnCompletionListener {
-
+                seek_bar.thumb = null
             })
             setVideoPath(mCurrentVideoInfo.playUrl)
             toggleAspectRatio(IRenderView.AR_MATCH_PARENT)
             setMediaController(ijkMediaController)
             start()
         }
+        mPresenter.getRelatedVideo(mCurrentVideoInfo.id)
     }
 
     /**
@@ -157,14 +206,44 @@ class VideoDetailActivity : BaseActivity<VideoDetailView, VideoDetailPresenter>(
      */
     private fun initPlaceHolder() {
         video_view_wrapper.setPlaceImageUrl(mCurrentVideoInfo.cover.detail)
+        iv_blurred.setImageURI(mCurrentVideoInfo.cover.blurred)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (video_view_wrapper.isPLaying()) {
+            video_view_wrapper.pause()
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (mBackPressed) {
+            video_view_wrapper.stopPlayback()
+            video_view_wrapper.release(true)
+        }
+        RxBus.unRegister(this)
+    }
+
+    override fun onBackPressedSupport() {
+        super.onBackPressedSupport()
+        mBackPressed = true
     }
 
     override fun getRelatedVideoInfoSuccess(itemList: MutableList<Content>) {
+        with(rv_video_recycler) {
+            visibility = View.VISIBLE
+            layoutManager = LinearLayoutManager(this@VideoDetailActivity)
+
+
+        }
     }
 
     override fun getRelatedVideoFail() {
     }
 
+    override fun toggleOverridePendingTransition() = true
+    override fun getOverridePendingTransition() = TransitionMode.BOTTOM
     override fun getContentViewLayoutId(): Int = R.layout.activity_video_detail
 
 

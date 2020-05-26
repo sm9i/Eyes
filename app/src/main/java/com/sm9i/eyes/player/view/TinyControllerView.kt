@@ -69,7 +69,7 @@ class TinyControllerView(context: Context) : ControllerView(context), View.OnCli
 
     override fun updateTime(currentTime: String, endTime: String) {
         tv_current_time.text = currentTime
-        tv_end_time.text = endTime
+        tv_end_time.text = "/$endTime"
     }
 
     override fun updateTogglePauseUI(isPlaying: Boolean) {

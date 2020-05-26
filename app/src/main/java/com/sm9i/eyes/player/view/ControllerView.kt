@@ -85,7 +85,7 @@ abstract class ControllerView(context: Context) : FrameLayout(context) {
      * 更新播放进度和时间
      */
     fun updateProgressAndTime(videoProgressEvent: VideoProgressEvent) {
-        if (isDragging) {
+        if (!isDragging) {
             updateProgress(videoProgressEvent.progress, videoProgressEvent.secondaryProgress)
             updateTime(
                 stringForTime(videoProgressEvent.currentPosition),

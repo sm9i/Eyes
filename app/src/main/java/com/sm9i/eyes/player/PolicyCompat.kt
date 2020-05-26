@@ -18,18 +18,20 @@ class PolicyCompat {
         return try {
             val clazz = Class.forName(PHONE_WINDOW_CLASS_NAME)
             val c = clazz.getConstructor(Context::class.java)
-            c.newInstance() as Window
+            c.newInstance(context) as Window
         } catch (e: Exception) {
             makeNewWindow(context)
         }
     }
 
     private fun makeNewWindow(context: Context): Window {
+
         return try {
             val clazz = Class.forName(POLICY_MANAGER_CLASS_NAME)
             val m = clazz.getMethod("makeNewWindow", Context::class.java)
             m.invoke(null, context) as Window
         } catch (e: Exception) {
+            e.printStackTrace()
             throw RuntimeException(e.message)
         }
     }

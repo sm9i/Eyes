@@ -198,7 +198,7 @@ class IjkVideoView @JvmOverloads constructor(
             RENDER_NONE -> setRenderView(null)
             RENDER_TEXTURE_VIEW -> {
                 val renderView = TextureRenderView(context)
-                if (mMediaPlayer == null) {
+                if (mMediaPlayer != null) {
                     renderView.getSurfaceHolder().bindToMediaPlayer(mMediaPlayer)
                     renderView.setVideoSize(mMediaPlayer!!.videoWidth, mMediaPlayer!!.videoHeight)
                     renderView.setVideoSampleAspectRatio(
