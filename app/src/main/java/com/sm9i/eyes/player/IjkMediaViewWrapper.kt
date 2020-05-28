@@ -62,7 +62,7 @@ class IjkVideoViewWrapper @JvmOverloads constructor(
         iv_place_image.setImageURI(url)
     }
 
-    private fun togglePlaceImage(visibility: Boolean) {
+     fun togglePlaceImage(visibility: Boolean) {
         iv_place_image.visibility = if (visibility) View.VISIBLE else View.GONE
         progress.visibility = if (visibility) View.VISIBLE else View.GONE
     }

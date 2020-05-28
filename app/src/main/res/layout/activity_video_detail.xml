@@ -9,27 +9,32 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="200dp">
+        android:layout_height="match_parent">
 
-        <com.facebook.drawee.view.SimpleDraweeView
-            android:id="@+id/iv_blurred"
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:actualImageScaleType="focusCrop"
-            app:failureImage="@drawable/shape_video_detail_placeholder"
-            app:placeholderImage="@drawable/shape_video_detail_placeholder"
-            app:placeholderImageScaleType="focusCrop" />
+            android:layout_marginTop="200dp">
 
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/video_player_bg_color" />
+            <com.facebook.drawee.view.SimpleDraweeView
+                android:id="@+id/iv_blurred"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:actualImageScaleType="focusCrop"
+                app:failureImage="@drawable/shape_video_detail_placeholder"
+                app:placeholderImage="@drawable/shape_video_detail_placeholder"
+                app:placeholderImageScaleType="focusCrop" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_video_recycler"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/video_player_bg_color" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_video_recycler"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </RelativeLayout>
     </RelativeLayout>
 
     <RelativeLayout

@@ -4,12 +4,12 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.media.MediaPlayer
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.SeekBar
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.chad.library.adapter.base.BaseQuickAdapter
 import com.sm9i.eyes.R
 import com.sm9i.eyes.entiy.Content
 import com.sm9i.eyes.entiy.ContentBean
@@ -19,8 +19,11 @@ import com.sm9i.eyes.player.IjkMediaController
 import com.sm9i.eyes.player.render.IRenderView
 import com.sm9i.eyes.rx.RxBus
 import com.sm9i.eyes.ui.base.BaseActivity
+import com.sm9i.eyes.ui.video.adapter.VideoDetailAdapter
 import com.sm9i.eyes.ui.video.presenter.VideoDetailPresenter
 import com.sm9i.eyes.ui.video.view.VideoDetailView
+import com.sm9i.eyes.widget.VideoDetailAuthorView
+import com.sm9i.eyes.widget.pull.head.VideoDetailHeadView
 import io.reactivex.functions.Consumer
 import kotlinx.android.synthetic.main.activity_video_detail.*
 import tv.danmaku.ijk.media.player.IMediaPlayer
@@ -186,7 +189,14 @@ class VideoDetailActivity : BaseActivity<VideoDetailView, VideoDetailPresenter>(
     private fun refreshVideo(videoInfo: Content?) {
         videoInfo?.let {
             mCurrentVideoInfo = videoInfo.data
-
+            rv_video_recycler.visibility = View.INVISIBLE
+            video_view_wrapper.togglePlaceImage(true)
+            seek_bar.secondaryProgress = 0
+            seek_bar.progress = 0
+            initPlaceHolder()
+            video_view_wrapper.setVideoPath(mCurrentVideoInfo.playUrl)
+            video_view_wrapper.start()
+            mPresenter.getRelatedVideo(mCurrentVideoInfo.id)
         }
     }
 
@@ -233,13 +243,56 @@ class VideoDetailActivity : BaseActivity<VideoDetailView, VideoDetailPresenter>(
     override fun getRelatedVideoInfoSuccess(itemList: MutableList<Content>) {
         with(rv_video_recycler) {
             visibility = View.VISIBLE
+
             layoutManager = LinearLayoutManager(this@VideoDetailActivity)
 
+            adapter = VideoDetailAdapter(itemList).apply {
+                addHeaderView(getVideoDetailView())
+                addHeaderView(getRelationVideoInfo())
+                openLoadAnimation(BaseQuickAdapter.ALPHAIN)
+                setFooterView(
+                    LayoutInflater.from(this@VideoDetailActivity).inflate(
+                        R.layout.item_the_end,
+                        null
+                    )
+                )
+                setOnItemClickListener { _, _, position ->
+                    if (getItemViewType(position) != BaseQuickAdapter.HEADER_VIEW) {
+                        refreshVideo(getItem(position))
+                    }
+
+                }
+
+            }
 
         }
     }
 
     override fun getRelatedVideoFail() {
+    }
+
+    override fun onResume() {
+        super.onResume()
+        registerProgressEvent()
+    }
+
+
+    private fun getVideoDetailView(): View {
+        return VideoDetailHeadView(this).apply {
+            setTitle(mCurrentVideoInfo.title)
+            setCategoryAndTime(mCurrentVideoInfo.category, mCurrentVideoInfo.duration)
+            setFavoriteCount(mCurrentVideoInfo.consumption.collectionCount)
+            setShareCount(mCurrentVideoInfo.consumption.shareCount)
+            setReplayCount(mCurrentVideoInfo.consumption.replyCount)
+            setDescription(mCurrentVideoInfo.description)
+            startScrollAnimation()
+        }
+    }
+
+    private fun getRelationVideoInfo(): View {
+        return VideoDetailAuthorView(this).apply {
+            setVideoAuthorInfo(mCurrentVideoInfo.author)
+        }
     }
 
     override fun toggleOverridePendingTransition() = true
