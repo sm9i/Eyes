@@ -5,13 +5,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.sm9i.eyes.ui.base.presenter.BasePresenter
+import com.sm9i.eyes.ui.base.view.BaseView
 import com.sm9i.eyes.utils.getGenericInstance
 
 
 /**
  * mvp 的BaseFragment
  */
-abstract class BaseFragment<V, T : BasePresenter<V>> : BaseAppCompatFragment(), BaseView {
+abstract class BaseFragment<V, T : BasePresenter<V>> : BaseAppCompatFragment(),
+    BaseView {
 
     protected lateinit var mPresenter: T
 

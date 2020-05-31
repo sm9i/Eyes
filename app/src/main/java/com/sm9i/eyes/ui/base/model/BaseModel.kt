@@ -22,4 +22,10 @@ interface BaseModel {
             .compose(globalHandleError())
             .compose(RxThreadHelper.switchObservableThread())
 
+
+    /**
+     * 根据url获取数据
+     */
+    fun getDataInfoFromUrl(url: String?): Observable<AndyInfo> =
+        Api.getDefault().getDataInfoFromUrl(url).compose(globalHandleError()).compose(RxThreadHelper.switchObservableThread())
 }

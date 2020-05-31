@@ -29,6 +29,9 @@ import kotlinx.android.synthetic.main.activity_video_detail.*
 import tv.danmaku.ijk.media.player.IMediaPlayer
 import java.util.ArrayList
 
+/**
+ * 视频详情界面
+ */
 class VideoDetailActivity : BaseActivity<VideoDetailView, VideoDetailPresenter>(), VideoDetailView {
 
 

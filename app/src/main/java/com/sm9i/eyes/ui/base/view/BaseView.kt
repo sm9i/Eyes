@@ -1,4 +1,4 @@
-package com.sm9i.eyes.ui.base
+package com.sm9i.eyes.ui.base.view
 
 import android.view.View
 

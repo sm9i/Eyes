@@ -3,13 +3,15 @@ package com.sm9i.eyes.ui.base
 import android.os.Bundle
 import android.view.View
 import com.sm9i.eyes.ui.base.presenter.BasePresenter
+import com.sm9i.eyes.ui.base.view.BaseView
 import com.sm9i.eyes.utils.getGenericInstance
 
 
 /**
  * mvp 的base activity
  */
-abstract class BaseActivity<V, T : BasePresenter<V>> : BaseAppCompatActivity(), BaseView {
+abstract class BaseActivity<V, T : BasePresenter<V>> : BaseAppCompatActivity(),
+    BaseView {
     protected lateinit var mPresenter: T
 
     override fun onCreate(savedInstanceState: Bundle?) {
