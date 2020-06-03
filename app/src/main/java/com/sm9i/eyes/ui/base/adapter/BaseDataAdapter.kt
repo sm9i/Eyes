@@ -1,5 +1,12 @@
 package com.sm9i.eyes.ui.base.adapter
 
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
+import android.view.Gravity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.alibaba.android.arouter.launcher.ARouter
 import com.chad.library.adapter.base.BaseQuickAdapter
 import com.chad.library.adapter.base.BaseViewHolder
 import com.chad.library.adapter.base.util.MultiTypeDelegate
@@ -8,7 +15,12 @@ import com.sm9i.eyes.entiy.Content
 import com.sm9i.eyes.ui.video.VideoDetailActivity
 import com.sm9i.eyes.widget.EliteImageView
 import com.sm9i.eyes.widget.ItemHeaderView
-import java.util.ArrayList
+import com.sm9i.eyes.widget.font.CustomFontTextView
+import com.sm9i.eyes.widget.font.FontType
+import com.sm9i.eyes.widget.image.imageloader.FrescoImageLoader
+import com.youth.banner.Banner
+import com.youth.banner.BannerConfig
+import java.util.*
 
 
 open class BaseDataAdapter(data: MutableList<Content>) :
@@ -51,6 +63,10 @@ open class BaseDataAdapter(data: MutableList<Content>) :
     }
 
     init {
+
+        val hasMap: Set<String> = data.map { it.type }.toSet()
+        Log.i("BaseDataAdapter", "当前列表所需type$hasMap")
+
         //设置布局类型
         multiTypeDelegate = object : MultiTypeDelegate<Content>() {
             override fun getItemType(t: Content?): Int {
@@ -76,54 +92,110 @@ open class BaseDataAdapter(data: MutableList<Content>) :
         }
 
         with(multiTypeDelegate) {
-            //            registerItemType(BANNER_TYPE, R.layout.layout_card_banner)
+            //首页list 布局
             registerItemType(FOLLOW_CARD_TYPE, R.layout.layout_follow_card)
-//            registerItemType(HORIZONTAL_SCROLL_CARD_TYPE, R.layout.layout_horizontal_scroll_card)
-//            registerItemType(
-//                VIDEO_COLLECTION_WITH_COVER_TYPE,
-//                R.layout.layout_collection_with_cover
-//            )
-//            registerItemType(SQUARE_CARD_COLLECTION_TYPE, R.layout.layout_square_collection)
-//            registerItemType(
-//                VIDEO_COLLECTION_OF_HORIZONTAL_SCROLL_CARD_TYPE,
-//                R.layout.item_collection_of_horizontal_scroll_card
-//            )
-//            registerItemType(
-//                VIDEO_COLLECTION_WITH_BRIEF_TYPE,
-//                R.layout.layout_collection_with_brief
-//            )
-//            registerItemType(TEXT_CARD_TYPE, R.layout.layout_single_text)
-//            registerItemType(BRIEF_CARD_TYPE, R.layout.layout_brife_card)
-//            registerItemType(BLANK_CARD_TYPE, R.layout.layout_blank_card)
-//            registerItemType(SQUARE_CARD_TYPE, R.layout.item_square_card)
-//            registerItemType(RECTANGLE_CARD_TYPE, R.layout.item_square_card)
-//            registerItemType(VIDEO_TYPE, R.layout.layout_single_video)
-//            registerItemType(VIDEO_BANNER_THREE_TYPE, R.layout.layout_follow_card)
-//            registerItemType(VIDEO_SMALL_CARD_TYPE, R.layout.layout_video_small_card)
+            //banner图
+            registerItemType(HORIZONTAL_SCROLL_CARD_TYPE, R.layout.layout_horizontal_scroll_card)
+            //文字 ，标题
+            registerItemType(TEXT_CARD_TYPE, R.layout.layout_single_text)
+            //横向的list  全部排行
+            registerItemType(SQUARE_CARD_COLLECTION_TYPE, R.layout.layout_square_collection)
+
+            registerItemType(VIDEO_COLLECTION_OF_HORIZONTAL_SCROLL_CARD_TYPE, R.layout.item_collection_of_horizontal_scroll_card)
         }
     }
 
 
     override fun convert(helper: BaseViewHolder?, item: Content) {
         when (helper?.itemViewType) {
-//            BANNER_TYPE -> setBannerInfo(helper, item)
             FOLLOW_CARD_TYPE -> setFollowCardInfo(helper, item)
-//            HORIZONTAL_SCROLL_CARD_TYPE -> setHorizontalScrollCardInfo(helper, item.data.itemList)
-//            VIDEO_COLLECTION_WITH_COVER_TYPE -> setCollectionCardWithCoverInfo(helper, item.data)
-//            SQUARE_CARD_COLLECTION_TYPE -> setSquareCollectionInfo(helper, item.data)
-//            VIDEO_COLLECTION_OF_HORIZONTAL_SCROLL_CARD_TYPE -> setCollectionOfHorizontalScrollCardInfo(helper, item)
-//            VIDEO_COLLECTION_WITH_BRIEF_TYPE -> setCollectionBriefInfo(helper, item)
-//            TEXT_CARD_TYPE -> setSingleText(helper, item)
-//            BRIEF_CARD_TYPE -> setBriefCardInfo(helper, item)
-//            BLANK_CARD_TYPE -> setBlankCardInfo(helper, item)
-//            SQUARE_CARD_TYPE -> setSquareCardInfo(helper, item.data)
-//            RECTANGLE_CARD_TYPE -> setRectangleCardInfo(helper, item.data)
-//            VIDEO_TYPE -> setSingleVideoInfo(helper, item)
-//            VIDEO_BANNER_THREE_TYPE -> setBanner3Info(helper, item.data)
-//            VIDEO_SMALL_CARD_TYPE -> setSmallCardInfo(helper, item.data)
+            HORIZONTAL_SCROLL_CARD_TYPE -> setHorizonTalScrollCrdInfo(helper, item)
+            TEXT_CARD_TYPE -> setTextCardInfo(helper, item)
+            SQUARE_CARD_COLLECTION_TYPE -> setSquareCardInfo(helper, item)
+
         }
     }
 
+    /**
+     * 矩形卡片信息
+     */
+    private fun setSquareCardInfo(helper: BaseViewHolder, item: Content) {
+        val itemList: MutableList<Content> = item.data.itemList
+        with(helper) {
+            getView<RecyclerView>(R.id.rv_square_recycler).apply {
+                //取消单独滑动效果  意思就是随父布局滑动
+                isNestedScrollingEnabled = false
+                layoutManager = LinearLayoutManager(mContext, LinearLayoutManager.HORIZONTAL, false)
+                adapter = SquareCollectionAdapter(itemList).apply {
+                    onItemClickListener = OnItemClickListener { _, _, position ->
+                        ARouter.getInstance()
+                            .build(Uri.parse(itemList[position].data.actionUrl))
+                            .navigation()
+                    }
+                }
+            }
+            item.data.header?.let {
+                getView<ItemHeaderView>(R.id.item_header_view).setHeader(it, item.type)
+            }
+        }
+    }
+
+    /**
+     * 设置文字信息
+     */
+    private fun setTextCardInfo(helper: BaseViewHolder, item: Content) {
+        helper.getView<CustomFontTextView>(R.id.tv_text).apply {
+            text = item.data.text
+            when (item.data.type) {
+                "header1" -> {
+                    setFontType(item.data.header?.font, FontType.LOBSTER)
+                    gravity = Gravity.CENTER
+                }
+                "header2" -> {
+                    setFontType(item.data.header?.font, FontType.BOLD)
+                    gravity = Gravity.CENTER
+                }
+                else -> {
+                    gravity = Gravity.START
+                    setFontType(item.data.header?.font, FontType.NORMAL)
+                }
+            }
+        }
+    }
+
+    /**
+     * 水平滚动卡片
+     */
+    private fun setHorizonTalScrollCrdInfo(helper: BaseViewHolder, item: Content) {
+        helper.getView<Banner>(R.id.banner).apply {
+            setImageLoader(FrescoImageLoader())
+            setImages(getHorizonTalCardUrl(item.data.itemList))
+            setBannerStyle(BannerConfig.CIRCLE_INDICATOR)
+            setIndicatorGravity(BannerConfig.CENTER)
+            isAutoPlay(true)
+            start()
+            setDelayTime(5000)
+            setOnBannerListener {
+                //跳转到页面？？
+                mContext.startActivity(Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse(item.data.itemList[it].data.actionUrl)
+                    addCategory(Intent.CATEGORY_DEFAULT)
+                    addCategory(Intent.CATEGORY_BROWSABLE)
+                })
+            }
+        }
+    }
+
+    /**
+     * 获取水平卡片图片地址
+     */
+    private fun getHorizonTalCardUrl(itemList: MutableList<Content>) =
+        itemList.map { it.data.image }
+
+
+    /**
+     * 首页布局
+     */
     private fun setFollowCardInfo(helper: BaseViewHolder, item: Content) {
         with(helper) {
             val info = item.data
