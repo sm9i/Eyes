@@ -10,7 +10,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/rl_more_container"
-
         android:foreground="@color/black_alpha_33"
         app:image_scale_type="center_crop"
         app:indicator_drawable_selected="@drawable/shape_indicator_selected"

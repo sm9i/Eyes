@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.view.Gravity
+import android.view.View
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.alibaba.android.arouter.launcher.ARouter
@@ -13,8 +14,10 @@ import com.chad.library.adapter.base.util.MultiTypeDelegate
 import com.sm9i.eyes.R
 import com.sm9i.eyes.entiy.Content
 import com.sm9i.eyes.ui.video.VideoDetailActivity
+import com.sm9i.eyes.utils.dip2px
 import com.sm9i.eyes.widget.EliteImageView
 import com.sm9i.eyes.widget.ItemHeaderView
+import com.sm9i.eyes.widget.MarginWithIndicatorViewPager
 import com.sm9i.eyes.widget.font.CustomFontTextView
 import com.sm9i.eyes.widget.font.FontType
 import com.sm9i.eyes.widget.image.imageloader.FrescoImageLoader
@@ -100,8 +103,20 @@ open class BaseDataAdapter(data: MutableList<Content>) :
             registerItemType(TEXT_CARD_TYPE, R.layout.layout_single_text)
             //横向的list  全部排行
             registerItemType(SQUARE_CARD_COLLECTION_TYPE, R.layout.layout_square_collection)
-
-            registerItemType(VIDEO_COLLECTION_OF_HORIZONTAL_SCROLL_CARD_TYPE, R.layout.item_collection_of_horizontal_scroll_card)
+            //横向的viewpage 图片轮播
+            registerItemType(
+                VIDEO_COLLECTION_OF_HORIZONTAL_SCROLL_CARD_TYPE,
+                R.layout.item_collection_of_horizontal_scroll_card
+            )
+            //作者栏目  带作者和横向的listview
+            registerItemType(
+                VIDEO_COLLECTION_WITH_BRIEF_TYPE,
+                R.layout.layout_collection_with_brief
+            )
+            //好像单纯的高度
+            registerItemType(BLANK_CARD_TYPE, R.layout.layout_blank_card)
+            //作者 带关注
+            registerItemType(BRIEF_CARD_TYPE, R.layout.layout_brife_card)
         }
     }
 
@@ -112,7 +127,89 @@ open class BaseDataAdapter(data: MutableList<Content>) :
             HORIZONTAL_SCROLL_CARD_TYPE -> setHorizonTalScrollCrdInfo(helper, item)
             TEXT_CARD_TYPE -> setTextCardInfo(helper, item)
             SQUARE_CARD_COLLECTION_TYPE -> setSquareCardInfo(helper, item)
+            VIDEO_COLLECTION_OF_HORIZONTAL_SCROLL_CARD_TYPE -> setCollectionOfHorizontalScrollCardInfo(
+                helper,
+                item
+            )
+            VIDEO_COLLECTION_WITH_BRIEF_TYPE -> setCollectionBriefInfo(helper, item)
+            BLANK_CARD_TYPE -> setBlankCardInfo(helper, item)
+            BRIEF_CARD_TYPE -> setBriefCardInfo(helper, item)
 
+        }
+    }
+
+    private fun setBriefCardInfo(helper: BaseViewHolder, content: Content) {
+        helper.getView<ItemHeaderView>(R.id.item_header_view)
+            .setAuthorHeader(content = content.data)
+    }
+
+    /**
+     * 设置空白信息高度
+     */
+    private fun setBlankCardInfo(helper: BaseViewHolder, content: Content) {
+        helper.getView<View>(R.id.view).apply {
+            val lp = layoutParams
+            lp.height = mContext.dip2px(content.data.height.toFloat())
+            layoutParams = lp
+        }
+    }
+
+
+    /**
+     * 作者栏目  带作者和横向的listview
+     */
+    private fun setCollectionBriefInfo(helper: BaseViewHolder, item: Content) {
+        with(helper) {
+            getView<RecyclerView>(R.id.rv_recycler).apply {
+                isNestedScrollingEnabled = false
+                layoutManager = LinearLayoutManager(mContext, LinearLayoutManager.HORIZONTAL, false)
+                adapter = CollectionBriefAdapter(item.data.itemList).apply {
+                    onItemClickListener = OnItemClickListener { _, _, position ->
+                        val item = getItem(position)
+                        VideoDetailActivity.start(
+                            mContext,
+                            item!!.data,
+                            data as ArrayList<Content>,
+                            position
+                        )
+
+                    }
+                }
+            }
+            item.data.header?.let {
+                getView<ItemHeaderView>(R.id.item_header_view).setHeader(
+                    it,
+                    item.data.type
+                )
+            }
+        }
+    }
+
+    /**
+     * 横向的viewpage 图片轮播
+     */
+    private fun setCollectionOfHorizontalScrollCardInfo(helper: BaseViewHolder, item: Content) {
+        with(helper) {
+            val data = item.data
+            data.header?.let {
+                getView<ItemHeaderView>(R.id.item_header_view).setHeader(
+                    it,
+                    item.type
+                )
+
+            }
+            getView<MarginWithIndicatorViewPager>(R.id.view_pager).apply {
+                pageViewClickListener = {
+                    val content = data.itemList[it].data
+                    VideoDetailActivity.start(
+                        mContext!!,
+                        content,
+                        data.itemList as ArrayList,
+                        it
+                    )
+                }
+                setData(data.itemList)
+            }
         }
     }
 

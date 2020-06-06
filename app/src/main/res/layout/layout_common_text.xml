@@ -83,6 +83,7 @@
             android:background="@drawable/shape_black_border"
             android:gravity="center"
             android:letterSpacing="0.2"
+            android:padding="5dp"
             android:text="@string/add_follow"
             android:textSize="11sp"
             android:visibility="gone"

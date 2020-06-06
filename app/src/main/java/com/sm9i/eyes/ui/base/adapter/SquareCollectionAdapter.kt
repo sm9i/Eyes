@@ -10,6 +10,9 @@ import com.sm9i.eyes.widget.font.FontType
 import com.sm9i.eyes.widget.font.TypefaceManager
 
 
+/**
+ * 横向的list  全部排行
+ */
 class SquareCollectionAdapter(data: MutableList<Content>) :
     BaseQuickAdapter<Content, BaseViewHolder>(R.layout.item_square_collection, data) {
     override fun convert(helper: BaseViewHolder, item: Content) {

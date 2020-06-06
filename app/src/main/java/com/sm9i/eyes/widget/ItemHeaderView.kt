@@ -83,6 +83,7 @@ class ItemHeaderView : FrameLayout {
             //关注
             follow?.let {
                 tv_focus.visibility = View.VISIBLE
+                iv_more.visibility = View.GONE
             }
             //描述
             description?.let {
